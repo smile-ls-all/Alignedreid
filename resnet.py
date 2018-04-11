@@ -1,15 +1,7 @@
 from collections import namedtuple
-
-
-
 import numpy as np
-
 import tensorflow as tf
-
 import six
-
-
-
 from tensorflow.python.training import moving_averages
 
 
@@ -64,34 +56,6 @@ class ResNet(object):
 
     self._extra_train_ops = []
 
-
-
-  # 构建模型图
-
-  def build_graph(self):
-
-    # 新建全局step
-
-    self.global_step = tf.contrib.framework.get_or_create_global_step()
-
-    # 构建ResNet网络模型
-
-    self._build_model()
-
-    # 构建优化训练操作
-
-    if self.mode == 'train':
-
-      self._build_train_op()
-
-    # 合并所有总结
-
-    self.summaries = tf.summary.merge_all()
-
-
-
-
-
   # 构建模型
 
   def _build_model(self):
@@ -102,7 +66,7 @@ class ResNet(object):
 
       """第一层卷积（3,3x3/1,16）"""
 
-      x = self._conv('init_conv', x, 3, 3, 16, self._stride_arr(1))
+      x = self._conv('init_conv', x, 3, 3, 16, self._stride_arr(1))#是否应用7*7的卷积核
 
 
 
@@ -186,109 +150,7 @@ class ResNet(object):
 
         x = res_func(x, filters[3], filters[3], self._stride_arr(1), False)
 
-
-
-    # 全局池化层
-
-    with tf.variable_scope('unit_last'):
-
-      x = self._batch_norm('final_bn', x)
-
-      x = self._relu(x, self.hps.relu_leakiness)
-
-      x = self._global_avg_pool(x)
-
-
-
-    # 全连接层 + Softmax
-
-    with tf.variable_scope('logit'):
-
-      logits = self._fully_connected(x, self.hps.num_classes)
-
-      self.predictions = tf.nn.softmax(logits)
-
-
-
-    # 构建损失函数
-
-    with tf.variable_scope('costs'):
-
-      # 交叉熵
-
-      xent = tf.nn.softmax_cross_entropy_with_logits(
-
-          logits=logits, labels=self.labels)
-
-      # 加和
-
-      self.cost = tf.reduce_mean(xent, name='xent')
-
-      # L2正则，权重衰减
-
-      self.cost += self._decay()
-
-      # 添加cost总结，用于Tensorborad显示
-
-      tf.summary.scalar('cost', self.cost)
-
-
-
-  # 构建训练操作
-
-  def _build_train_op(self):
-
-    # 学习率/步长
-
-    self.lrn_rate = tf.constant(self.hps.lrn_rate, tf.float32)
-
-    tf.summary.scalar('learning_rate', self.lrn_rate)
-
-
-
-    # 计算训练参数的梯度
-
-    trainable_variables = tf.trainable_variables()
-
-    grads = tf.gradients(self.cost, trainable_variables)
-
-
-
-    # 设置优化方法
-
-    if self.hps.optimizer == 'sgd':
-
-      optimizer = tf.train.GradientDescentOptimizer(self.lrn_rate)
-
-    elif self.hps.optimizer == 'mom':
-
-      optimizer = tf.train.MomentumOptimizer(self.lrn_rate, 0.9)
-
-
-
-    # 梯度优化操作
-
-    apply_op = optimizer.apply_gradients(
-
-                        zip(grads, trainable_variables),
-
-                        global_step=self.global_step, 
-
-                        name='train_step')
-
-    
-
-    # 合并BN更新操作
-
-    train_ops = [apply_op] + self._extra_train_ops
-
-    # 建立优化操作组
-
-    self.train_op = tf.group(*train_ops)
-
-
-
-
+     return x
 
   # 把步长值转换成tf.nn.conv2d需要的步长数组
 
@@ -672,38 +534,3 @@ class ResNet(object):
 
     return tf.where(tf.less(x, 0.0), leakiness * x, x, name='leaky_relu')
 
-  
-
-  # 全连接层，网络最后一层
-
-  def _fully_connected(self, x, out_dim):
-
-    # 输入转换成2D tensor，尺寸为[N,-1]
-
-    x = tf.reshape(x, [self.hps.batch_size, -1])
-
-    # 参数w，平均随机初始化，[-sqrt(3/dim), sqrt(3/dim)]*factor
-
-    w = tf.get_variable('DW', [x.get_shape()[1], out_dim],
-
-                        initializer=tf.uniform_unit_scaling_initializer(factor=1.0))
-
-    # 参数b，0值初始化
-
-    b = tf.get_variable('biases', [out_dim], initializer=tf.constant_initializer())
-
-    # 计算x*w+b
-
-    return tf.nn.xw_plus_b(x, w, b)
-
-
-
-  # 全局均值池化
-
-  def _global_avg_pool(self, x):
-
-    assert x.get_shape().ndims == 4
-
-    # 在第2&3维度上计算均值，尺寸由WxH收缩为1x1
-
-    return tf.reduce_mean(x, [1, 2])
