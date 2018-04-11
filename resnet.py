@@ -185,6 +185,9 @@ class ResNet(object):
       with tf.variable_scope('unit_3_%d' % i):
 
         x = res_func(x, filters[3], filters[3], self._stride_arr(1), False)
+        
+        
+     #池化层，得到globle feature和local feature 
 
 
 
