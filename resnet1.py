@@ -177,6 +177,16 @@ with tf.variable_scope('unit_2_%d' % i):
         x = res_func(x, filters[3], filters[3], self._stride_arr(1), False)
         
      #池化层，得到globle feature和local feature 
+    # shape [N,C,H,W]
+    feat=x
+    global_feat=tf.nn.avg_pool(feat,feat.size()[2:])
+    #shape [N,C]       
+    global_feat=global_feat.view(global_feat.size(0),-1)
+    # shape[N,C,H,1]
+    local_feat=tf.reduce_mean(feat,-1,keep_dim=True)
+    local_feat=tf.nn.relu(self._batch_norm(self._conv('fc', orig_x, 1, in_filter, out_filter, stride)
+
+))     
     return x
     
     
