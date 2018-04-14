@@ -179,20 +179,45 @@ with tf.variable_scope('unit_2_%d' % i):
      #池化层，得到globle feature和local feature 
     # shape [N,C,H,W]
     feat=x
-    global_feat=tf.nn.avg_pool(feat,feat.size()[2:])
+    #lobal_feat=tf.nn.avg_pool(feat,feat.size()[2:])
+    global_feat=self._global_avg_pool(feat)
     #shape [N,C]       
     global_feat=global_feat.view(global_feat.size(0),-1)
     # shape[N,C,H,1]
     local_feat=tf.reduce_mean(feat,-1,keep_dim=True)
-    local_feat=tf.nn.relu(self._batch_norm(self._conv('fc', orig_x, 1, in_filter, out_filter, stride)
+    #卷积核1*1，in_channel=2048,out_channel=128,
+    local_feat=tf.nn.conv2d(local_feat,[1,1,2048,128],strides=[1,1,1,1],padding=0)
+    local_feat=self._batch_norm(local_feat)
+    local_feat=tf.nn.relu(local_feat)
+    local_feat=local_feat.squeeze(-1).permute(0,2,1)
+    if num_classes is not None:
+        logits=self._fully_connected(global_feat,num_classes)
+        return global_feat,local_feat,logits
+    return global_feat,local_feat
+    
+    
+    
+    
+  # 全局均值池化
+  def _global_avg_pool(self, x):
+    assert x.get_shape().ndims == 4
+    # 在第2&3维度上计算均值，尺寸由WxH收缩为1x1
+    return tf.reduce_mean(x, [2, 3])
 
-))     
-    return x
-    
-    
-    
-    
-    
+
+
+  # 全连接层，网络最后一层
+  def _fully_connected(self, x, out_dim):
+    # 输入转换成2D tensor，尺寸为[N,-1]
+    x = tf.reshape(x, [self.hps.batch_size, -1])
+    # 参数w，平均随机初始化，[-sqrt(3/dim), sqrt(3/dim)]*factor
+    w = tf.get_variable('DW', [x.get_shape()[1], out_dim],initializer=tf.uniform_unit_scaling_initializer(factor=1.0))
+    # 参数b，0值初始化
+    b = tf.get_variable('biases', [out_dim], initializer=tf.constant_initializer())
+    # 计算x*w+b
+    return tf.nn.xw_plus_b(x, w, b)
+
+
   # 把步长值转换成tf.nn.conv2d需要的步长数组
   def _stride_arr(self, stride):    
     return [1, stride, stride, 1] 
