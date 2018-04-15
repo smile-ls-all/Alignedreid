@@ -19,9 +19,8 @@ def normalize(x, axis=-1):
     x: pytorch Variable, same shape as input      
 
   """
-
-  x = 1. * x / (torch.norm(x, 2, axis, keepdim=True).expand_as(x) + 1e-12)
-
+ #torch.norm,返回输入张量input 的p 范数。
+  x = 1. * x / (torch.norm(x, 2, axis, keepdim=True).expand_as(x) + 1e-12) 
   return x
 
 
@@ -44,16 +43,18 @@ def euclidean_dist(x, y):
 
   """
 
-  m, n = x.size(0), y.size(0)
+  m, n = x.size(0), y.size(0)   #tf.shape()
+  #x.expand(m,n)将矩阵扩充为m，n;x.t()矩阵的转置
 
-  xx = torch.pow(x, 2).sum(1, keepdim=True).expand(m, n)
+  xx = torch.pow(x, 2).sum(1, keepdim=True).expand(m, n)   #xx=tf.pow(x,2)
+  #tf.reduce_sum()
 
-  yy = torch.pow(y, 2).sum(1, keepdim=True).expand(n, m).t()
+  yy = torch.pow(y, 2).sum(1, keepdim=True).expand(n, m).t()#.t()矩阵的转置
 
   dist = xx + yy
-
-  dist.addmm_(1, -2, x, y.t())
-
+# \(out = (beta * M) + (alpha * mat1 @ mat2)\)
+  dist.addmm_(1, -2, x, y.t())  #执行矩阵乘法
+#clamp:小于min的数置为min,大于max的置为max
   dist = dist.clamp(min=1e-12).sqrt()  # for numerical stability
 
   return dist
@@ -101,7 +102,7 @@ def batch_euclidean_dist(x, y):
   yy = torch.pow(y, 2).sum(-1, keepdim=True).expand(N, n, m).permute(0, 2, 1)
 
   dist = xx + yy
-
+#baddbmm_()批矩阵的乘法
   dist.baddbmm_(1, -2, x, y.permute(0, 2, 1))
 
   dist = dist.clamp(min=1e-12).sqrt()  # for numerical stability
@@ -191,7 +192,9 @@ def local_dist(x, y):
   M, m, d = x.size()
 
   N, n, d = y.size()
-
+#返回一个内存连续的有相同数据的 tensor, 如果原 tensor 内存连续则返回原 tensor.
+#返回一个有相同数据但大小不同的新的 tensor.
+#返回的 tensor 与原 tensor 共享相同的数据，一定有相同数目的元素，但大小不同. 一个 tensor 必须是连续的 ( contiguous() ) 才能被查看.
   x = x.contiguous().view(M * m, d)
 
   y = y.contiguous().view(N * n, d)
@@ -204,7 +207,7 @@ def local_dist(x, y):
 
   # shape [M * m, N * n] -> [M, m, N, n] -> [m, n, M, N]
 
-  dist_mat = dist_mat.contiguous().view(M, m, N, n).permute(1, 3, 0, 2)
+  dist_mat = dist_mat.contiguous().view(M, m, N, n).permute(1, 3, 0, 2)  #将tensor的维度换位 
 
   # shape [M, N]
 
