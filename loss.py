@@ -295,7 +295,7 @@ def hard_example_mining(dist_mat, labels, return_inds=False):
 
 
 
-  assert len(dist_mat.size()) == 2
+  assert len(dist_mat.size()) == 2  #是否是二维的
 
   assert dist_mat.size(0) == dist_mat.size(1)
 
@@ -329,7 +329,7 @@ def hard_example_mining(dist_mat, labels, return_inds=False):
 
   # shape [N]
 
-  dist_ap = dist_ap.squeeze(1)
+  dist_ap = dist_ap.squeeze(1) #去掉size为1的维度
 
   dist_an = dist_an.squeeze(1)
 
