@@ -4,8 +4,6 @@ import torch
 
 
 
-
-
 def normalize(x, axis=-1):
 
   """Normalizing to unit length along the specified dimension.
@@ -27,7 +25,7 @@ def normalize(x, axis=-1):
 
 
 
-def euclidean_dist(x, y):
+'''def euclidean_dist(x, y):
 
   """
 
@@ -57,7 +55,12 @@ def euclidean_dist(x, y):
 #clamp:小于min的数置为min,大于max的置为max
   dist = dist.clamp(min=1e-12).sqrt()  # for numerical stability
 
-  return dist
+  return dist'''
+def euclidean_dist(x,y):
+  m,n=tf.shape(x),tf.shape(y)
+  xx=tf.pow(x,2)
+  xx=tf.reduce_sum(xx,keepdim=True)
+  xx=tf.tile(xx,(1,n))
 
 
 
