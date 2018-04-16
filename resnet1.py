@@ -169,7 +169,8 @@ with tf.variable_scope('unit_2_%d' % i):
 
     # 第三组
 
-    with tf.variable_scope('unit_3_0'):
+
+           with tf.variable_scope('unit_3_0'):
       x = res_func(x, filters[2], filters[3], self._stride_arr(strides[2]),
                    activate_before_residual[2])
     for i in six.moves.range(1, self.hps.num_residual_units):
@@ -189,7 +190,9 @@ with tf.variable_scope('unit_2_%d' % i):
     local_feat=tf.nn.conv2d(local_feat,[1,1,2048,128],strides=[1,1,1,1],padding=0)
     local_feat=self._batch_norm(local_feat)
     local_feat=tf.nn.relu(local_feat)
-    local_feat=local_feat.squeeze(-1).permute(0,2,1)
+    local_feat=tf.squeeze(local_feat,-1)
+    local_feat=tf.transpose(local_feat,perm=[0,2,1])
+    #local_feat=local_feat.squeeze(-1).permute(0,2,1)
     if num_classes is not None:
         logits=self._fully_connected(global_feat,num_classes)
         return global_feat,local_feat,logits
