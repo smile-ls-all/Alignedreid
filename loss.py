@@ -61,6 +61,9 @@ def euclidean_dist(x,y):
   xx=tf.pow(x,2)
   xx=tf.reduce_sum(xx,keepdim=True)
   xx=tf.tile(xx,(1,n))
+  yy=tf.pow(y,2)
+  yy=tf.reduce_sum(yy,keepdim=True)
+  yy=tf.tile(yy,(1,n))
 
 
 
