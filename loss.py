@@ -57,19 +57,25 @@ def normalize(x, axis=-1):
 
   return dist'''
 def euclidean_dist(x,y):
-  m,n=tf.shape(x),tf.shape(y)
+  m=tf.shape(x)[0]
+  n=tf.shape(y)[0]
   xx=tf.pow(x,2)
-  xx=tf.reduce_sum(xx,keepdim=True)
+  xx=tf.reduce_sum(xx,1,keep_dims=True)
   xx=tf.tile(xx,(1,n))
   yy=tf.pow(y,2)
-  yy=tf.reduce_sum(yy,keepdim=True)
+  yy=tf.reduce_sum(yy,1,keep_dims=True)
   yy=tf.tile(yy,(1,n))
+  yy=tf.transpose(yy)
+  dist=xx+yy
+  dist=tf.add(dist,tf.matmul(-2*x,tf.transpose(y)))
+  '''*dist=tf.clamp()'''
+  return dist
 
 
 
 
 
-def batch_euclidean_dist(x, y):
+'''def batch_euclidean_dist(x, y):
 
   """
 
@@ -86,21 +92,11 @@ def batch_euclidean_dist(x, y):
   """
 
   assert len(x.size()) == 3
-
   assert len(y.size()) == 3
-
   assert x.size(0) == y.size(0)
-
   assert x.size(-1) == y.size(-1)
-
-
-
   N, m, d = x.size()
-
   N, n, d = y.size()
-
-
-
   # shape [N, m, n]
 
   xx = torch.pow(x, 2).sum(-1, keepdim=True).expand(N, m, n)
@@ -114,12 +110,27 @@ def batch_euclidean_dist(x, y):
   dist = dist.clamp(min=1e-12).sqrt()  # for numerical stability
 
   return dist
+'''
+def batch_euclidean_dist(x, y):
+  assert tf.size(tf.shape(x)) == tf.constant(3)
+  assert tf.size(tf.shape(y)) == 3
+  assert tf.shape(x)[0] == tf.shape(y)[0]
+  assert tf.shape(x)[2] == tf.shape(y)[2]
+  N, m, d = tf.shape(x)[0],tf.shape(x)[1],tf.shape(x)[2]
+  xx=tf.reduce_sum(tf.pow(x,2),-1,keep_dims=True)
+  xx=tf.tile(xx,[1,1,n])
+  yy=tf.reduce_sum(tf.pow(y,2),-1,keep_dims=True).transpose(0,2,1)
+  yy=tf.tile(yy,[1,1,m])
+  dist=xx+yy
+  dist=tf.add(dist,tf.matmul(-2*x,tf.transpose(0,2,1)))
+  dist=clamp
+  return dist
+  
 
 
 
 
-
-def shortest_dist(dist_mat):
+'''def shortest_dist(dist_mat):
 
   """Parallel version.
 
@@ -173,7 +184,27 @@ def shortest_dist(dist_mat):
 
   dist = dist[-1][-1]
 
-  return dist
+  return dist'''
+def shortest_dist(dist_mat):
+   m,n=tf.shape(dist_mat)[0],tf.shape(dist_mat)[1]
+   sess=tf.Session()
+   init_op=tf.initialize_all_variables()
+   m,n=sess.run(m),sess.run(n)
+   dist_mat=sess.run(dist_mat)
+   dist = [[0 for _ in range(n)] for _ in range(m)]
+   for i in range(m):
+      for j in range(n):
+         if (i == 0) and (j == 0):
+            dist[i][j] = dist_mat[i, j]
+         elif (i == 0) and (j > 0):
+           dist[i][j] = dist[i][j - 1] + dist_mat[i, j]
+         elif (i > 0) and (j == 0):
+           dist[i][j] = dist[i - 1][j] + dist_mat[i, j]
+         else:
+           dist[i][j] = tf.minimum(dist[i - 1][j], dist[i][j - 1]) + dist_mat[i, j]
+   dist = dist[-1][-1]
+   return dist
+
 
 
 
