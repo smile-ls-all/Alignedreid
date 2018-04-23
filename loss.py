@@ -3,7 +3,7 @@ from __future__ import print_function
 import torch
 
 
-
+'''
 def normalize(x, axis=-1):
 
   """Normalizing to unit length along the specified dimension.
@@ -19,6 +19,9 @@ def normalize(x, axis=-1):
   """
  #torch.norm,返回输入张量input 的p 范数。
   x = 1. * x / (torch.norm(x, 2, axis, keepdim=True).expand_as(x) + 1e-12) 
+  return x'''
+def normalize(x, axis=-1):
+  x=1.*x/(tf.sqrt(tf.reduce_sum(tf.pow(x,2),keep_dims=True))+1e-12)
   return x
 
 
