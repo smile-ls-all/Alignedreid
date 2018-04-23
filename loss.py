@@ -210,7 +210,7 @@ def shortest_dist(dist_mat):
 
 
 
-def local_dist(x, y):
+'''def local_dist(x, y):
 
   """
 
@@ -250,13 +250,23 @@ def local_dist(x, y):
 
   dist_mat = shortest_dist(dist_mat)
 
+  return dist_mat'''
+def local_dist(x, y):
+  M,m,d= tf.shape(x)[0],tf.shape(x)[1],tf.shape(x)[2]
+  N,n,d= tf.shape(x)[0],tf.shape(x)[1],tf.shape(x)[2]
+  x=tf.reshape(x,[M*m,d])
+  y=tf.reshape(y,[N*n,d])
+  dist_mat=euclidean_dist(x,y)
+  dist_mat=(tf.exp(dist_mat)-1.)/(tf.exp(dist_mat)+1)
+  dist_mat=tf.transpose(dist_mat,perm=[1,3,0,2])
+  dist_mat=shortest_dist(dist_mat)
   return dist_mat
 
 
 
 
 
-def batch_local_dist(x, y):
+'''def batch_local_dist(x, y):
 
   """
 
@@ -292,13 +302,19 @@ def batch_local_dist(x, y):
 
   dist = shortest_dist(dist_mat.permute(1, 2, 0))
 
+  return dist'''
+def batch_local_list(x,y):
+  dist_mat=batch_euclidean_dist(x,y)
+  dist_mat=(tf.exp(dist_mat)-1.)/(tf.exp(dist_mat)+1.)
+  dist=shortest_dist(tf.transpose(dist_mat,perm=[1,2,0]))
   return dist
 
 
 
 
 
-def hard_example_mining(dist_mat, labels, return_inds=False):
+
+'''def hard_example_mining(dist_mat, labels, return_inds=False):
 
   """For each anchor, find the hardest positive and negative sample.
 
@@ -402,7 +418,17 @@ def hard_example_mining(dist_mat, labels, return_inds=False):
 
 
 
-  return dist_ap, dist_an
+  return dist_ap, dist_an'''
+
+def hard_example_mining(dist_mat, labels, return_inds=False):
+    N=tf.shape(dist_mat)[0]
+    is_pos=tf.equal(tf.tile(lables,[N,N]),tf.transpose(tf.tile(lables,[N,N])))
+    is_neg=tf.not_equal(tf.tile(lables,[N,N]),tf.transpose(tf.tile(lables,[N,N])))
+    dist_ap, relative_p_inds = tf.maximum(tf.reshape(dist_mat[is_pos]),1, keep_dims=True)
+    dist_an, relative_n_inds = tf.minimum(tf.reshape(dist_mat[is_neg]),1, keep_dims=True)
+    dist_ap=tf.squeeze(dist_ap)
+    dist_an=tf.squeeze(dist_an)
+    return dist_ap,dist_an
 
 
 
@@ -471,8 +497,6 @@ def global_loss(tri_loss, global_feat, labels, normalize_feature=True):
   loss = tri_loss(dist_ap, dist_an)
 
   return loss, p_inds, n_inds, dist_ap, dist_an, dist_mat
-
-
 
 
 
