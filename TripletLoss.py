@@ -60,3 +60,9 @@ class TripletLoss(object):
       loss = self.ranking_loss(dist_an - dist_ap, y)
 
     return loss
+d_pos = tf.reduce_sum(tf.square(dist_ap, 1)
+d_neg = tf.reduce_sum(tf.square(dist_an), 1)
+
+loss = tf.maximum(0., margin + d_pos - d_neg)
+loss = tf.reduce_mean(loss)
+retutn loss
