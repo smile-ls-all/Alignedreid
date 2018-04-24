@@ -423,14 +423,21 @@ def batch_local_list(x,y):
   return dist_ap, dist_an'''
 
 def hard_example_mining(dist_mat, labels, return_inds=False):
-    N=tf.shape(dist_mat)[0]
-    is_pos=tf.equal(tf.tile(lables,[N,N]),tf.transpose(tf.tile(lables,[N,N])))
-    is_neg=tf.not_equal(tf.tile(lables,[N,N]),tf.transpose(tf.tile(lables,[N,N])))
-    dist_ap, relative_p_inds = tf.maximum(tf.reshape(dist_mat[is_pos]),1, keep_dims=True)
-    dist_an, relative_n_inds = tf.minimum(tf.reshape(dist_mat[is_neg]),1, keep_dims=True)
-    dist_ap=tf.squeeze(dist_ap)
-    dist_an=tf.squeeze(dist_an)
-    return dist_ap,dist_an
+  lables=tf.expand_dims(labels,0)
+  sess=tf.Session()
+  sess.run(tf.initialize_all_variables())
+  N=tf.shape(dist_mat)[0]
+  is_pos=tf.equal(tf.tile(lables,(N,1)),tf.transpose(tf.tile(lables,(N,1))))
+  is_neg=tf.not_equal(tf.tile(lables,[N,1]),tf.transpose(tf.tile(lables,[N,1])))
+  temp_ap=sess.run(dist_mat)
+  temp_ap[sess.run(is_neg)]=0
+  temp_an=sess.run(dist_mat)
+  temp_an[sess.run(is_pos)]=0
+  dist_ap=tf.reduce_max(tf.Variable(temp_ap),1,keep_dims=True)
+  dist_an=tf.reduce_max(tf.Variable(temp_an),1,keep_dims=True)
+  dist_ap=tf.squeeze(dist_ap)
+  dist_an=tf.squeeze(dist_an)
+  return dist_ap,dist_an
 
 
 
