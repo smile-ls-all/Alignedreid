@@ -17,8 +17,7 @@ def normalize(x, axis=-1):
     x: pytorch Variable, same shape as input      
 
   """
- #torch.norm,返回输入张量input 的p 范数。
-  x = 1. * x / (torch.norm(x, 2, axis, keepdim=True).expand_as(x) + 1e-12) 
+ #torch.norm,返回输入张量input 的p 范数。  x = 1. * x / (torch.norm(x, 2, axis, keepdim=True).expand_as(x) + 1e-12) 
   return x'''
 def normalize(x, axis=-1):
   x=1.*x/(tf.sqrt(tf.reduce_sum(tf.pow(x,2),keep_dims=True))+1e-12)
@@ -71,7 +70,7 @@ def euclidean_dist(x,y):
   yy=tf.transpose(yy)
   dist=xx+yy
   dist=tf.add(dist,tf.matmul(-2*x,tf.transpose(y)))
-  '''*dist=tf.clamp()'''
+  dist=tf.clip_by_value(dist,le-12,le+12)
   return dist
 
 
@@ -126,7 +125,7 @@ def batch_euclidean_dist(x, y):
   yy=tf.tile(yy,[1,1,m])
   dist=xx+yy
   dist=tf.add(dist,tf.matmul(-2*x,tf.transpose(0,2,1)))
-  dist=clamp
+  dist=tf.clip_by_value(dist,le-12,le+12)
   return dist
   
 
