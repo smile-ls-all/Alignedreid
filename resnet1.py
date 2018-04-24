@@ -183,7 +183,7 @@ with tf.variable_scope('unit_2_%d' % i):
     #lobal_feat=tf.nn.avg_pool(feat,feat.size()[2:])
     global_feat=self._global_avg_pool(feat)
     #shape [N,C]       
-    global_feat=global_feat.view(global_feat.size(0),-1)
+    global_feat=tf.reshape(global_feat,[tf.shape(global_feat)[0],-1])
     # shape[N,C,H,1]
     local_feat=tf.reduce_mean(feat,-1,keep_dim=True)
     #卷积核1*1，in_channel=2048,out_channel=128,
