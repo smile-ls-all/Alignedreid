@@ -460,7 +460,6 @@ def global_loss(tri_loss, global_feat, labels, normalize_feature=True):
       Channel dimension
 
   Returns:
-
     loss: pytorch Variable, with shape [1]
 
     p_inds: pytorch LongTensor, with shape [N]; 
@@ -499,13 +498,13 @@ def global_loss(tri_loss, global_feat, labels, normalize_feature=True):
 
   dist_mat = euclidean_dist(global_feat, global_feat)
 
-  dist_ap, dist_an, p_inds, n_inds = hard_example_mining(
+  dist_ap, dist_an= hard_example_mining(
 
     dist_mat, labels, return_inds=True)
 
   loss = tri_loss(dist_ap, dist_an)
 
-  return loss, p_inds, n_inds, dist_ap, dist_an, dist_mat
+  return loss,dist_ap, dist_an, dist_mat
 
 
 
