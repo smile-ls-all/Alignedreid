@@ -19,13 +19,13 @@ class TripletLoss(object):
 
     self.margin = margin
 
-    if margin is not None:
+    '''if margin is not None:
 
       self.ranking_loss = nn.MarginRankingLoss(margin=margin)
 
     else:
 
-      self.ranking_loss = nn.SoftMarginLoss()
+      self.ranking_loss = nn.SoftMarginLoss()'''
 
 
 
@@ -49,7 +49,7 @@ class TripletLoss(object):
 
     """
 
-    y = Variable(dist_an.data.new().resize_as_(dist_an.data).fill_(1))
+   ''' y = Variable(dist_an.data.new().resize_as_(dist_an.data).fill_(1))
 
     if self.margin is not None:
 
@@ -59,10 +59,9 @@ class TripletLoss(object):
 
       loss = self.ranking_loss(dist_an - dist_ap, y)
 
-    return loss
-d_pos = tf.reduce_sum(tf.square(dist_ap, 1)
-d_neg = tf.reduce_sum(tf.square(dist_an), 1)
-
-loss = tf.maximum(0., margin + d_pos - d_neg)
-loss = tf.reduce_mean(loss)
-retutn loss
+    return loss'''
+    #d_pos = tf.reduce_sum(tf.square(dist_ap, 1)
+    #d_neg = tf.reduce_sum(tf.square(dist_an), 1)
+    loss = tf.maximum(0., margin + dist_ap - dist_an)
+    loss = tf.reduce_mean(loss)
+    retutn loss
