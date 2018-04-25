@@ -120,10 +120,7 @@ def train(hps):
       else:
         self._lrn_rate = 0.0001
 
-
-
   # 建立监控Session
-
   with tf.train.MonitoredTrainingSession(
       checkpoint_dir=FLAGS.log_root,
       hooks=[logging_hook, _LearningRateSetterHook()],
@@ -148,7 +145,6 @@ def evaluate(hps):
   saver = tf.train.Saver()
   # 总结文件 生成器
   summary_writer = tf.summary.FileWriter(FLAGS.eval_dir)
-
   # 执行Session
   sess = tf.Session(config=tf.ConfigProto(allow_soft_placement=True)) 
 
@@ -211,38 +207,17 @@ def evaluate(hps):
     # 执行写文件
 
     summary_writer.flush()
-
-
-
     if FLAGS.eval_once:
-
       break
-
-
-
     time.sleep(60)
-
-
-
-
-
 def main(_):
-
   # 设备选择
-
   if FLAGS.num_gpus == 0:
-
     dev = '/cpu:0'
-
   elif FLAGS.num_gpus == 1:
-
     dev = '/gpu:0'
-
   else:
-
     raise ValueError('Only support 0 or 1 gpu.')
-
-    
 
   # 执行模式
 
@@ -272,11 +247,7 @@ def main(_):
       evaluate(hps)
 
 
-
-
-
 if __name__ == '__main__':
 
   tf.logging.set_verbosity(tf.logging.INFO)
-
   tf.app.run()
