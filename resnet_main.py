@@ -32,8 +32,7 @@ tf.app.flags.DEFINE_string('dataset',
 
                            'cifar10', 
 
-                           'cifar10 or cifar100.')
-
+                           'cifar10 or cifar100.'
 # 模式：训练、测试
 
 tf.app.flags.DEFINE_string('mode', 
@@ -60,9 +59,14 @@ tf.app.flags.DEFINE_string('eval_data_path',
 
 # 图片尺寸
 
-tf.app.flags.DEFINE_integer('image_size', 
+tf.app.flags.DEFINE_integer('image_height', 
 
-                            32, 
+                            224, 
+
+                            'Image side length.')
+tf.app.flags.DEFINE_integer('image_width', 
+
+                            224, 
 
                             'Image side length.')
 
@@ -112,7 +116,7 @@ tf.app.flags.DEFINE_string('log_root',
 
 tf.app.flags.DEFINE_integer('num_gpus', 
 
-                            1,
+                            0,
 
                             'Number of gpus used for training. (0 or 1)')
 
