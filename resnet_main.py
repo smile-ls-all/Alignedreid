@@ -1,56 +1,30 @@
 """ResNet Train/Eval module.
 
 """
-
 import time
-
 import six
-
 import sys
-
-
-
 import cifar_input
-
 import numpy as np
-
-import resnet_model
-
+import model
 import tensorflow as tf
 
 
-
-
-
 # FLAGS参数设置
-
 FLAGS = tf.app.flags.FLAGS
-
 # 数据集类型
-
 tf.app.flags.DEFINE_string('dataset', 
-
                            'cifar10', 
-
                            'cifar10 or cifar100.'
 # 模式：训练、测试
-
 tf.app.flags.DEFINE_string('mode', 
-
                            'train', 
-
                            'train or eval.')
-
 # 训练数据路径
-
 tf.app.flags.DEFINE_string('train_data_path', 
-
                            'data/cifar-10-batches-bin/data_batch*',
-
                            'Filepattern for training data.')
-
 # 测试数据路劲
-
 tf.app.flags.DEFINE_string('eval_data_path', 
 
                            'data/cifar-10-batches-bin/test_batch.bin',
@@ -60,172 +34,90 @@ tf.app.flags.DEFINE_string('eval_data_path',
 # 图片尺寸
 
 tf.app.flags.DEFINE_integer('image_height', 
-
                             224, 
-
                             'Image side length.')
 tf.app.flags.DEFINE_integer('image_width', 
-
                             224, 
-
                             'Image side length.')
 
 # 训练过程数据的存放路劲
-
 tf.app.flags.DEFINE_string('train_dir', 
-
                            'temp/train',
-
                            'Directory to keep training outputs.')
-
 # 测试过程数据的存放路劲
-
 tf.app.flags.DEFINE_string('eval_dir', 
-
                            'temp/eval',
-
                            'Directory to keep eval outputs.')
-
 # 测试数据的Batch数量
-
 tf.app.flags.DEFINE_integer('eval_batch_count', 
-
                             50,
-
                             'Number of batches to eval.')
 
 # 一次性测试
-
 tf.app.flags.DEFINE_bool('eval_once', 
-
                          False,
-
                          'Whether evaluate the model only once.')
-
 # 模型存储路劲
-
 tf.app.flags.DEFINE_string('log_root', 
-
                            'temp',
-
                            'Directory to keep the checkpoints. Should be a '
-
                            'parent directory of FLAGS.train_dir/eval_dir.')
 
 # GPU设备数量（0代表CPU）
-
 tf.app.flags.DEFINE_integer('num_gpus', 
-
                             0,
-
                             'Number of gpus used for training. (0 or 1)')
 
 
 
-
-
 def train(hps):
-
   # 构建输入数据(读取队列执行器）
-
-  images, labels = cifar_input.build_input(
-
-      FLAGS.dataset, FLAGS.train_data_path, hps.batch_size, FLAGS.mode)
-
+  images, labels = cifar_input.build_input(FLAGS.dataset, FLAGS.train_data_path, hps.batch_size, FLAGS.mode)
   # 构建残差网络模型
-
   model = resnet_model.ResNet(hps, images, labels, FLAGS.mode)
-
   model.build_graph()
-
-
-
   # 计算预测准确率
-
   truth = tf.argmax(model.labels, axis=1)
-
   predictions = tf.argmax(model.predictions, axis=1)
-
   precision = tf.reduce_mean(tf.to_float(tf.equal(predictions, truth)))
-
-
-
   # 建立总结存储器，每100步存储一次
-
   summary_hook = tf.train.SummarySaverHook(
-
               save_steps=100,
-
               output_dir=FLAGS.train_dir,
-
               summary_op=tf.summary.merge(
-
                               [model.summaries,
-
                                tf.summary.scalar('Precision', precision)]))
 
   # 建立日志打印器，每100步打印一次
-
   logging_hook = tf.train.LoggingTensorHook(
-
       tensors={'step': model.global_step,
-
                'loss': model.cost,
-
                'precision': precision},
-
       every_n_iter=100)
-
-
-
+                           
   # 学习率更新器，基于全局Step
-
   class _LearningRateSetterHook(tf.train.SessionRunHook):
-
-
-
     def begin(self):
-
       #初始学习率
-
       self._lrn_rate = 0.1
-
-
-
+                           
     def before_run(self, run_context):
-
       return tf.train.SessionRunArgs(
-
                       # 获取全局Step
-
                       model.global_step,
-
                       # 设置学习率
-
                       feed_dict={model.lrn_rate: self._lrn_rate})  
 
-
-
     def after_run(self, run_context, run_values):
-
       # 动态更新学习率
-
       train_step = run_values.results
-
       if train_step < 40000:
-
         self._lrn_rate = 0.1
-
       elif train_step < 60000:
-
         self._lrn_rate = 0.01
-
       elif train_step < 80000:
-
         self._lrn_rate = 0.001
-
       else:
-
         self._lrn_rate = 0.0001
 
 
