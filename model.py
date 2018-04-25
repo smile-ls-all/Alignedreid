@@ -175,8 +175,8 @@ class ResNet(object):
     tf.summary.scalar('learning_rate', self.lrn_rate)
 
     # 计算训练参数的梯度
-    trainable_variables = tf.trainable_variables()
-    grads = tf.gradients(self.cost, trainable_variables)
+    trainable_variables = tf.trainable_variables()#返回使用trainable = True创建的所有变量。
+    grads = tf.gradients(self.cost, trainable_variables)#返回变量的梯度
 
     # 设置优化方法
     if self.hps.optimizer == 'sgd':
