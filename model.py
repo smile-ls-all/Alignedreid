@@ -152,10 +152,10 @@ class ResNet(object):
     # 构建损失函数
     with tf.variable_scope('costs'):
       # 交叉熵
-      g_loss, g_dist_ap, g_dist_an, g_dist_mat = global_loss(g_tri_loss, global_feat, labels_t,normalize_feature=cfg.normalize_feature)
-      l_loss, l_dist_ap, l_dist_an, _ = local_loss(l_tri_loss, local_feat, None, None, labels_t,normalize_feature=cfg.normalize_feature)
+      g_loss, g_dist_ap, g_dist_an, g_dist_mat = global_loss(g_tri_loss, global_feat, labels_t,normalize_feature=True)
+      l_loss, l_dist_ap, l_dist_an, _ = local_loss(l_tri_loss, local_feat, None, None, labels_t,normalize_feature=True)
       #id_loss = id_criterion(logits, labels_var)
-      id_loss=tf.nn.sigmoid_cross_entropy_with_logits(logits, labels_var)
+      id_loss=tf.nn.sigmoid_cross_entropy_with_logits(logits, labels)
       loss = g_loss * cfg.g_loss_weight \
       + l_loss * cfg.l_loss_weight \
         + id_loss * cfg.id_loss_weight
