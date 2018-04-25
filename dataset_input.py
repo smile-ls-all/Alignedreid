@@ -112,8 +112,9 @@ def read_tfRecord(file_tfRecord):
     #print(tf.shape(image),tf.shape(features['label']))
     return image,label
 
-root_dir = os.getcwd()
+
 def getTrianList():
+    root_dir = os.getcwd()
     with open("train.txt","w") as f:
         for file in os.listdir(root_dir+'/train'):
              a=file.split('_')[0]
