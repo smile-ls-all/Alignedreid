@@ -125,165 +125,85 @@ def train(hps):
   # 建立监控Session
 
   with tf.train.MonitoredTrainingSession(
-
       checkpoint_dir=FLAGS.log_root,
-
       hooks=[logging_hook, _LearningRateSetterHook()],
-
       chief_only_hooks=[summary_hook],
-
       # 禁用默认的SummarySaverHook，save_summaries_steps设置为0
-
       save_summaries_steps=0, 
-
       config=tf.ConfigProto(allow_soft_placement=True)) as mon_sess:
-
-    while not mon_sess.should_stop():
-
+      while not mon_sess.should_stop():
       # 执行优化训练操作
-
-      mon_sess.run(model.train_op)
-
-
-
-
+           mon_sess.run(model.train_op)
 
 def evaluate(hps):
-
   # 构建输入数据(读取队列执行器）
-
   images, labels = cifar_input.build_input(
-
       FLAGS.dataset, FLAGS.eval_data_path, hps.batch_size, FLAGS.mode)
-
   # 构建残差网络模型
-
   model = resnet_model.ResNet(hps, images, labels, FLAGS.mode)
-
   model.build_graph()
 
   # 模型变量存储器
 
   saver = tf.train.Saver()
-
   # 总结文件 生成器
-
   summary_writer = tf.summary.FileWriter(FLAGS.eval_dir)
 
-  
-
   # 执行Session
-
-  sess = tf.Session(config=tf.ConfigProto(allow_soft_placement=True))
-
-  
+  sess = tf.Session(config=tf.ConfigProto(allow_soft_placement=True)) 
 
   # 启动所有队列执行器
-
   tf.train.start_queue_runners(sess)
-
-
-
   best_precision = 0.0
-
   while True:
-
     # 检查checkpoint文件
-
     try:
-
       ckpt_state = tf.train.get_checkpoint_state(FLAGS.log_root)
-
     except tf.errors.OutOfRangeError as e:
-
       tf.logging.error('Cannot restore checkpoint: %s', e)
-
       continue
-
     if not (ckpt_state and ckpt_state.model_checkpoint_path):
-
       tf.logging.info('No model to eval yet at %s', FLAGS.log_root)
-
       continue
-
-  
 
     # 读取模型数据(训练期间生成)
-
     tf.logging.info('Loading checkpoint %s', ckpt_state.model_checkpoint_path)
-
     saver.restore(sess, ckpt_state.model_checkpoint_path)
-
-
-
     # 逐Batch执行测试
-
     total_prediction, correct_prediction = 0, 0
-
     for _ in six.moves.range(FLAGS.eval_batch_count):
-
       # 执行预测
-
       (loss, predictions, truth, train_step) = sess.run(
-
           [model.cost, model.predictions,
-
            model.labels, model.global_step])
-
       # 计算预测结果
-
       truth = np.argmax(truth, axis=1)
-
       predictions = np.argmax(predictions, axis=1)
-
       correct_prediction += np.sum(truth == predictions)
-
       total_prediction += predictions.shape[0]
 
-
-
     # 计算准确率
-
     precision = 1.0 * correct_prediction / total_prediction
-
     best_precision = max(precision, best_precision)
 
-
-
     # 添加准确率总结
-
     precision_summ = tf.Summary()
-
     precision_summ.value.add(
-
         tag='Precision', simple_value=precision)
-
     summary_writer.add_summary(precision_summ, train_step)
 
     
 
     # 添加最佳准确总结
-
     best_precision_summ = tf.Summary()
-
     best_precision_summ.value.add(
-
         tag='Best Precision', simple_value=best_precision)
-
     summary_writer.add_summary(best_precision_summ, train_step)
-
-    
-
     # 添加测试总结
-
     #summary_writer.add_summary(summaries, train_step)
-
-    
-
     # 打印日志
 
     tf.logging.info('loss: %.3f, precision: %.3f, best precision: %.3f' %
-
                     (loss, precision, best_precision))
 
     
@@ -327,57 +247,28 @@ def main(_):
   # 执行模式
 
   if FLAGS.mode == 'train':
-
     batch_size = 128
-
   elif FLAGS.mode == 'eval':
-
     batch_size = 100
-
-
-
+                           
   # 数据集类别数量
-
-  if FLAGS.dataset == 'cifar10':
-
-    num_classes = 10
-
-  elif FLAGS.dataset == 'cifar100':
-
-    num_classes = 100
-
-
-
+  num_classes = 11
+                           
   # 残差网络模型参数
-
   hps = resnet_model.HParams(batch_size=batch_size,
-
                              num_classes=num_classes,
-
                              min_lrn_rate=0.0001,
-
                              lrn_rate=0.1,
-
                              num_residual_units=5,
-
                              use_bottleneck=False,
-
                              weight_decay_rate=0.0002,
-
                              relu_leakiness=0.1,
-
                              optimizer='mom')
-
   # 执行训练或测试
-
   with tf.device(dev):
-
     if FLAGS.mode == 'train':
-
       train(hps)
-
     elif FLAGS.mode == 'eval':
-
       evaluate(hps)
 
 
