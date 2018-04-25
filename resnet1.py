@@ -3,25 +3,48 @@ import numpy as np
 import tensorflow as tf
 import six
 from tensorflow.python.training import moving_averages
+HParams = namedtuple('HParams',
+                     'batch_size, num_classes, min_lrn_rate, lrn_rate, '
+                     'num_residual_units, use_bottleneck, weight_decay_rate, '
+                     'relu_leakiness, optimizer')
 
 
 
-__all__ = ['ResNet', 'resnet18', 'resnet34', 'resnet50', 'resnet101',
+class ResNet(object):
 
-           'resnet152']
-model_urls = {
 
-  'resnet18': 'https://download.pytorch.org/models/resnet18-5c106cde.pth',
 
-  'resnet34': 'https://download.pytorch.org/models/resnet34-333f7ec4.pth',
+  """ResNet model."""
+  def __init__(self, hps, images, labels, mode):
 
-  'resnet50': 'https://download.pytorch.org/models/resnet50-19c8e357.pth',
+    """ResNet constructor.
+    Args:
+      hps: Hyperparameters.
+      images: Batches of images 图片. [batch_size, image_size, image_size, 3]
+      labels: Batches of labels 类别标签. [batch_size, num_classes]
+      mode: One of 'train' and 'eval'.
+    """
+    self.hps = hps
+    self._images = images
+    self.labels = labels
+    self.mode = mode
+    self._extra_train_ops = []
+    
 
-  'resnet101': 'https://download.pytorch.org/models/resnet101-5d3b4d8f.pth',
+ # 构建模型图
+  def build_graph(self):
+    # 新建全局step
+    self.global_step = tf.contrib.framework.get_or_create_global_step()
+    # 构建ResNet网络模型
+    self._build_model()
+    # 构建优化训练操作
+    if self.mode == 'train':
+      self._build_train_op()
+    # 合并所有总结
+    self.summaries = tf.summary.merge_all()
 
-  'resnet152': 'https://download.pytorch.org/models/resnet152-b121ed2d.pth',
 
-}
+
 
   def _bottleneck_residual(self, x, in_filter, out_filter, stride,activate_before_residual=False):
     # 是否前置激活(取残差直连之前进行BN和ReLU）
