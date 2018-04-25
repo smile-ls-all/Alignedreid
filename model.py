@@ -108,6 +108,7 @@ class ResNet(object):
         x = res_func(x, filters[2], filters[2], self._stride_arr(1), False)
         
     # 第三组
+
     with tf.variable_scope('unit_3_0'):
       x = res_func(x, filters[2], filters[3], self._stride_arr(strides[2]),
                    activate_before_residual[2])
@@ -151,10 +152,17 @@ class ResNet(object):
     # 构建损失函数
     with tf.variable_scope('costs'):
       # 交叉熵
+      g_loss, g_dist_ap, g_dist_an, g_dist_mat = global_loss(g_tri_loss, global_feat, labels_t,normalize_feature=cfg.normalize_feature)
+      l_loss, l_dist_ap, l_dist_an, _ = local_loss(l_tri_loss, local_feat, None, None, labels_t,normalize_feature=cfg.normalize_feature)
+      #id_loss = id_criterion(logits, labels_var)
+      id_loss=tf.nn.sigmoid_cross_entropy_with_logits(logits, labels_var)
+      loss = g_loss * cfg.g_loss_weight \
+      + l_loss * cfg.l_loss_weight \
+        + id_loss * cfg.id_loss_weight
       xent = tf.nn.softmax_cross_entropy_with_logits(
           logits=logits, labels=self.labels)
       # 加和
-      self.cost = tf.reduce_mean(xent, name='xent')
+      self.cost = loss
       # L2正则，权重衰减
       self.cost += self._decay()
       # 添加cost总结，用于Tensorborad显示
